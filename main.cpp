@@ -1,34 +1,22 @@
 //
 // Created by RealL on 8/24/2022.
 //
-#include <iostream>
+
+#include "chip8.h"
+
 using namespace std;
-int main() {
-    File* f = fopen("test.bin", "rb");
-    if (f == nullptr) {
-        cout << "Error: Couldn't open file" << endl;
-        exit(1);
-    }
+int main(int argc, char* args[]) {
 
-    fseek(f, 0L, SEEK_END);
-    int fsize = ftell(f);
-    fseek(f, 0L, SEEK_SET);
-    unsigned char* buffer = malloc(fsize);
-    fread(buffer, fsize, 1, f);
-    fclose(f);
-    int pc = 0;
-
-    //While not at end
-    while(pc < fsize) {
-
-        //Fetch - Get opcodes
-
-
+        chip8 game = chip8();
+        game.loadFile(args[1]);
+        game.emulateCycle();
 
         //Decode - Turn opcodes into instructions (use switch statements, look at first bit)
 
         //Execute - Execute on hardware
-    }
+
+    cout << "hi " << endl;
+
 
 
     return 0;
