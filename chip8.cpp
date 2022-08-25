@@ -37,8 +37,8 @@ void chip8::loadFile(char* name) {
     buffer = (unsigned char*)malloc(4096);
     fread(buffer, fsize, 1, f);
     fclose(f);
-    for (int j = 3896; j < 4096; j++) {
-        *(buffer+j) = fontset[j];
+    for (int j = 0; j < 80; j++) {
+        *(buffer+j+3896) = fontset[j];
     }
 }
 void chip8::emulateCycle() {
@@ -72,18 +72,18 @@ void chip8::emulateCycle() {
             //1
         case 0x1000:
             //1NNN - Jump NNN
-            pc = num & 0x0FFF - 0x0200;
+            pc = (num&0x0FFF) - 0x0200;
             break;
 
             //2
         case 0x2000:
             routines.push(pc);
-            pc = num&0x0FFF - 0x0200;
+            pc = (num&0x0FFF) - 0x0200;
             break;
 
             //3
         case 0x3000:
-            //3XNN - if vx != NN then
+            //3XNN - if vx == NN then
             if ((V[(num >> 8) & 0x000F]) == (num & 0x00FF)) {
                 pc += 4;
             } else {
@@ -121,7 +121,7 @@ void chip8::emulateCycle() {
             //7
         case 0x7000:
             //7XNN - vx += NN
-            V[(num >> 8) & 0x000F] += num & 0x00FF;
+            V[(num >> 8) & 0x000F] += num&0x00FF;
             pc += 2;
             break;
 
@@ -135,36 +135,36 @@ void chip8::emulateCycle() {
                     break;
                 case 0x1:
                     //8XY1 - vx |= vy
-                    V[(num >> 8) & 0x000F] = V[(num >> 8) & 0x000F] | V[(num >> 4) & 0x000F];
+                    V[(num >> 8) & 0x000F] = (V[(num >> 8) & 0x000F]) | (V[(num >> 4) & 0x000F]);
                     pc += 2;
                     break;
                 case 0x2:
                     //8XY2 - vx &= vy
-                    V[(num >> 8) & 0x000F] = V[(num >> 8) & 0x000F] & V[(num >> 4) & 0x000F];
+                    V[(num >> 8) & 0x000F] = (V[(num >> 8) & 0x000F]) & (V[(num >> 4) & 0x000F]);
                     pc += 2;
                     break;
                 case 0x3:
                     //8XY3 - vx ^= vy
-                    V[(num >> 8) & 0x000F] = V[(num >> 8) & 0x000F] ^ V[(num >> 4) & 0x000F];
+                    V[(num >> 8) & 0x000F] = (V[(num >> 8) & 0x000F]) ^ (V[(num >> 4) & 0x000F]);
                     pc += 2;
                     break;
                 case 0x4:
-                    V[(num >> 8) & 0x000F] = V[(num >> 8) & 0x000F] + V[(num >> 4) & 0x000F];
                     if ((V[(num >> 8) & 0x000F] + V[(num >> 4) & 0x000F]) > 255) {
                         V[0xF] = 1;
                     } else {
                         V[0xF] = 0;
                     }
+                    V[(num >> 8) & 0x000F] = V[(num >> 8) & 0x000F] + V[(num >> 4) & 0x000F];
                     pc += 2;
                     break;
                 case 0x5:
                     //8XY5 - vx -= vy (vf = 0 on borrow)
-                    V[(num >> 8) & 0x000F] = V[(num >> 8) & 0x000F] - V[(num >> 4) & 0x000F];
                     if (V[(num >> 8) & 0x000F] > V[(num >> 4) & 0x000F]) {
                         V[0xF] = 1;
                     } else {
                         V[0xF] = 0;
                     }
+                    V[(num >> 8) & 0x000F] = V[(num >> 8) & 0x000F] - V[(num >> 4) & 0x000F];
                     pc += 2;
                     break;
                 case 0x6:
@@ -174,18 +174,17 @@ void chip8::emulateCycle() {
                     pc += 2;
                     break;
                 case 0x7:
-                    V[(num >> 8) & 0x000F] = V[(num >> 4) & 0x000F] - V[(num >> 8) & 0x000F];
                     if (V[(num >> 4) & 0x000F] > V[(num >> 8) & 0x000F]) {
                         V[0xF] = 1;
                     } else {
                         V[0xF] = 0;
                     }
+                    V[(num >> 8) & 0x000F] = V[(num >> 4) & 0x000F] - V[(num >> 8) & 0x000F];
                     pc += 2;
                     break;
                 case 0xE:
-                    // WARNING
-                    V[0xF] = (num & 0x8000) >> 15;
-                    V[(num >> 8) & 0x000F] = V[(num >> 8) & 0x000F] << 1;
+                    V[0xF] = (num&0x8000) >> 15;
+                    V[(num >> 8) & 0x000F] = V[(num >> 8) & 0x000F]<<1;
                     pc += 2;
                     break;
             }
@@ -210,7 +209,7 @@ void chip8::emulateCycle() {
             //B
         case 0xB000:
             //BNNN - jump to NNN + v0
-            pc = num & 0x00FF + V[0];
+            pc = (num&0x0FFF - 0x0200) + V[0];
             break;
 
             //C
@@ -309,11 +308,12 @@ void chip8::emulateCycle() {
                     i += V[(num >> 8) & 0x000F];
                     pc += 2;
                     break;
-                case 0x29:
+                case 0x29: {
                     //FX29 - i := hex vx (set i to a hex character)
-                    i = 4096+(V[(num >> 8) & 0x000F] * 0x5);
+                    i = 4096 + (V[(num >> 8) & 0x000F] * 0x5);
                     pc += 2;
                     break;
+                }
                 case 0x33:
                     //FF33 - bcd vx (decode vx into BCD)
                     *(buffer+(i&0x00FF)) = V[(num >> 8) & 0x000F] / 100;
@@ -344,5 +344,5 @@ void chip8::emulateCycle() {
 
     if (sound > 0)
         if(sound == 1);
-    --sound;
+            --sound;
 }

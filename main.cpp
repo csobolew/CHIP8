@@ -97,7 +97,7 @@ int main(int argc, char* args[]) {
             SDL_RenderCopy(renderer, sdlTexture, NULL, NULL);
             SDL_RenderPresent(renderer);
         }
-        std::this_thread::sleep_for(std::chrono::microseconds(800));
+        std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
 
 
